@@ -1,0 +1,13 @@
+# Compiled files
+target/
+
+# Test files
+Test.java
+
+# Libraries
+src/main/java/com/hirohiro716/scent
+
+# Setting files
+.vscode/
+*.code-workspace
+

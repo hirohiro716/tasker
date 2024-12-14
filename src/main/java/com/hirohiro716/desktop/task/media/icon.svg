@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   image-rendering="optimizeSpeed"
+   version="1.1"
+   id="svg28"
+   sodipodi:docname="icon.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs32">
+    <linearGradient
+       id="linearGradient897"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#999999;stop-opacity:1;"
+         offset="0"
+         id="stop895" />
+    </linearGradient>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter1036"
+       x="-0.037501171"
+       y="-0.037501171"
+       width="1.0750023"
+       height="1.0750023">
+      <feGaussianBlur
+         stdDeviation="1 1"
+         result="blur"
+         id="feGaussianBlur1034" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="namedview30"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="9.3581163"
+     inkscape:cx="30.508277"
+     inkscape:cy="32.378311"
+     inkscape:current-layer="svg28" />
+  <rect
+     width="63.998001"
+     height="63.998001"
+     x="0.0019989014"
+     y="-0.029000998"
+     fill="#f2f2f2"
+     rx="14.858434"
+     ry="14.858434"
+     id="rect4-3"
+     style="fill:#b3b3b3;fill-opacity:1;stroke-width:1.14278;filter:url(#filter1036)"
+     transform="matrix(0.93025961,0,0,0.93025961,2.2307636,2.2596016)" />
+  <rect
+     width="56.002"
+     height="56.002"
+     x="4"
+     y="3.969"
+     fill="#f2f2f2"
+     rx="13.002"
+     ry="13.002"
+     id="rect4" />
+  <circle
+     cx="15.5"
+     cy="18.5"
+     r="4.5"
+     fill="#0079fd"
+     id="circle6" />
+  <path
+     fill="#fff"
+     d="M15.5 15a3.5 3.5 0 0 0-3.5 3.5 3.5 3.5 0 0 0 3.5 3.5 3.5 3.5 0 0 0 3.5-3.5 3.5 3.5 0 0 0-3.5-3.5m0 1a2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5 2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5"
+     id="path8" />
+  <circle
+     cx="15.5"
+     cy="32.5"
+     r="4.5"
+     fill="#fb3027"
+     id="circle10" />
+  <path
+     fill="#fff"
+     d="M15.5 29a3.5 3.5 0 0 0-3.5 3.5 3.5 3.5 0 0 0 3.5 3.5 3.5 3.5 0 0 0 3.5-3.5 3.5 3.5 0 0 0-3.5-3.5m0 1a2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5 2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5"
+     id="path12" />
+  <circle
+     cx="15.5"
+     cy="46.5"
+     r="4.5"
+     fill="#f79500"
+     id="circle14" />
+  <path
+     fill="#fff"
+     d="M15.5 43.001a3.5 3.5 0 0 0-3.5 3.5 3.5 3.5 0 0 0 3.5 3.5 3.5 3.5 0 0 0 3.5-3.5 3.5 3.5 0 0 0-3.5-3.5m0 1a2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5 2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5"
+     id="path16" />
+  <rect
+     width="28"
+     height="1"
+     x="24"
+     y="18"
+     fill="#ccc"
+     ry=".5"
+     id="rect18" />
+  <rect
+     width="28"
+     height="1"
+     x="24"
+     y="32"
+     fill="#ccc"
+     ry=".5"
+     id="rect20" />
+  <rect
+     width="28"
+     height="1"
+     x="24"
+     y="46.002"
+     fill="#ccc"
+     ry=".5"
+     id="rect22" />
+  <path
+     d="M3.998 45.998v1c0 7.203 5.8 13.004 13.004 13.004h29.996c7.203 0 13.004-5.8 13.004-13.004v-1c0 7.203-5.8 13.002-13.004 13.002H17.002A12.975 12.975 0 0 1 3.998 45.998"
+     opacity=".1"
+     id="path24" />
+  <path
+     fill="#fff"
+     d="M3.998 18.004v-1C3.998 9.801 9.798 4 17.002 4h29.996c7.203 0 13.004 5.8 13.004 13.004v1c0-7.203-5.8-13.002-13.004-13.002H17.002A12.975 12.975 0 0 0 3.998 18.004"
+     opacity=".5"
+     id="path26" />
+  <rect
+     width="56.501999"
+     height="56.001999"
+     x="3.5"
+     y="3.9690001"
+     fill="#f2f2f2"
+     rx="13.118085"
+     ry="13.002"
+     id="rect4-6"
+     style="fill:none;stroke:#808080;stroke-width:0.502227;stroke-dasharray:none" />
+</svg>
