@@ -481,7 +481,7 @@ public class Tasker {
                                 exception.printStackTrace();
                             }
                         }
-                        Thread.sleep(1000);
+                        Thread.sleep(2000);
                     } catch (Exception exception) {
                         exception.printStackTrace();
                     }
