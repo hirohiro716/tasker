@@ -21,6 +21,7 @@ import org.gnome.gtk.FileChooserDialog;
 import org.gnome.gtk.Gtk;
 import org.gnome.gtk.IconSize;
 import org.gnome.gtk.Image;
+import org.gnome.gtk.Label;
 import org.gnome.gtk.Menu;
 import org.gnome.gtk.MenuItem;
 import org.gnome.gtk.MessageDialog;
@@ -42,6 +43,7 @@ import org.gnome.gtk.WrapMode;
 import com.hirohiro716.desktop.task.config.Config;
 import com.hirohiro716.desktop.task.config.ConfigProperty;
 import com.hirohiro716.scent.ExceptionMessenger;
+import com.hirohiro716.scent.StringObject;
 import com.hirohiro716.scent.datetime.Datetime;
 import com.hirohiro716.scent.filesystem.Directory;
 import com.hirohiro716.scent.filesystem.File;
@@ -62,6 +64,10 @@ public class Tasker {
     private static Box tasksBox;
 
     private static Map<Widget, String> widgetAndData = new HashMap<>();
+
+    private static Map<Widget, Label> widgetAndNumberOfItemsLabel = new HashMap<>();
+
+    private static boolean windowIsClosed = false;
 
     /**
      * 可能であれば設定ファイルに保存する。
@@ -114,8 +120,8 @@ public class Tasker {
         // Description
         TextView descriptionTextView = new TextView();
         descriptionTextView.getBuffer().setText(task.getDescription());
-        descriptionTextView.setMarginLeft(5);
-        descriptionTextView.setMarginRight(5);
+        descriptionTextView.setMarginLeft(2);
+        descriptionTextView.setMarginRight(2);
         descriptionTextView.setWrapMode(WrapMode.WORD_CHAR);
         descriptionTextView.setAcceptsTab(false);
         descriptionTextView.setEditable(editable);
@@ -200,11 +206,14 @@ public class Tasker {
                                     Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
                                     task.put(TaskProperty.DIRECTORY, fileChooserDialog.getFilename());
                                     Tasker.config.setTask(task);
-                                    Tasker.saveToConfigFileIfPossible();
-                                    directoryButton.setImage(new Image(Stock.DIRECTORY, IconSize.BUTTON));
-                                    Tasker.widgetAndData.put(directoryButton, task.getDirectory());
+                                    Tasker.config.saveToFile();
+                                    Tasker.updateTaskBoxesWithConfig(task, false);
+                                    Tasker.tasksBox.showAll();
                                 } catch (ParseException exception) {
                                     exception.printStackTrace();
+                                } catch (IOException exception) {
+                                    MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
+                                    messageDialog.showAll();
                                 }
                             }
                             fileChooserDialog.hide();
@@ -215,9 +224,15 @@ public class Tasker {
             }
         });
         buttonsBox.add(directoryButton);
+        // Number of items
+        Label numberOfItemsLabel = new Label("-");
+        numberOfItemsLabel.setSizeRequest(28, 28);
+        numberOfItemsLabel.overrideColor(StateFlags.NORMAL, new RGBA(0, 0, 0, 0.5));
+        buttonsBox.add(numberOfItemsLabel);
+        Tasker.widgetAndNumberOfItemsLabel.put(box, numberOfItemsLabel);
         // Menu
         Button menuButton = new Button();
-        menuButton.setImage(new Image(Stock.EXECUTE, IconSize.BUTTON));
+        menuButton.setImage(new Image(Stock.PREFERENCES, IconSize.BUTTON));
         menuButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
         menuButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
         menuButton.connect(new Widget.ButtonPressEvent() {
@@ -394,6 +409,7 @@ public class Tasker {
                     return true;
                 }
                 Gtk.mainQuit();
+                Tasker.windowIsClosed = true;
                 return false;
             }
         });
@@ -429,6 +445,50 @@ public class Tasker {
         });
         buttonsBox.packEnd(addButton, false, false, 15);
         window.showAll();
+        // Number of items updater
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                while (true) {
+                    if (Tasker.windowIsClosed) {
+                        return;
+                    }
+                    try {
+                        for (Widget box : Tasker.widgetAndData.keySet()) {
+                            try {
+                                Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
+                                Directory directory = new Directory(task.getDirectory());
+                                Label label = Tasker.widgetAndNumberOfItemsLabel.get(box);
+                                if (label != null) {
+                                    StringObject text = new StringObject("-");
+                                    if (directory.exists()) {
+                                        int numberOfItems = directory.getFilesystemItems(".{1,}").length;
+                                        if (numberOfItems > 0) {
+                                            text.set(numberOfItems);
+                                        }
+                                    }
+                                    Gtk.idleAdd(new Handler() {
+
+                                        @Override
+                                        public boolean run() {
+                                            label.setLabel(text.toString());
+                                            return false;
+                                        }
+                                    });
+                                }
+                            } catch (Exception exception) {
+                                exception.printStackTrace();
+                            }
+                        }
+                        Thread.sleep(1000);
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread.start();
         Gtk.main();
     }
 }
