@@ -1,6 +1,7 @@
 package com.hirohiro716.desktop.task;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +38,6 @@ import org.gnome.gtk.TextView;
 import org.gnome.gtk.ToggleButton;
 import org.gnome.gtk.Widget;
 import org.gnome.gtk.Window;
-import org.gnome.gtk.WindowPosition;
 import org.gnome.gtk.WrapMode;
 
 import com.hirohiro716.desktop.task.config.Config;
@@ -389,11 +389,15 @@ public class Tasker {
         }
         // Window
         Tasker.window = new Window();
-        Tasker.window.setTitle("タスク");
+        StringObject title = new StringObject("タスク - ");
+        title.append(System.getProperty("user.name"));
+        title.append("@");
+        title.append(InetAddress.getLocalHost().getHostName());
+        Tasker.window.setTitle(title.toString());
         Tasker.window.setIcon(new Pixbuf(Tasker.class.getResourceAsStream("media/icon.svg").readAllBytes()));
         Tasker.window.setDefaultSize(400, 500);
         Tasker.window.setResizable(false);
-        Tasker.window.setPosition(WindowPosition.CENTER);
+        Tasker.window.setStick(true);
         Tasker.window.move(config.getWindowLocationX(), config.getWindowLocationY());
         window.connect(new Window.DeleteEvent() {
 
