@@ -346,7 +346,7 @@ public class Tasker {
                 }
             }
             boolean focus = focusTask != null && task.getID() == focusTask.getID();
-            boolean editable = focus && focusTaskEditable;
+            boolean editable = task.getDescription().length() == 0 || focus && focusTaskEditable;
             Box taskBox = Tasker.createTaskBox(task, focus, editable);
             if (index == 0) {
                 Paned topSpacer = new Paned(Orientation.HORIZONTAL);
