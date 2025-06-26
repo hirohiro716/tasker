@@ -2,7 +2,11 @@ package com.hirohiro716.desktop.task;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.gnome.gdk.Event;
@@ -247,10 +251,19 @@ public class Tasker {
                     public void onActivate(MenuItem menuItem) {
                         try {
                             Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
-                            if (task.getSort() == 0) {
-                                return;
+                            Datetime limit = new Datetime();
+                            limit.addDay(-1);
+                            long lower = 0;
+                            for (Task lowerTask : Tasker.config.getTasks()) {
+                                if (lowerTask.getID() == task.getID()) {
+                                    break;
+                                }
+                                Datetime completedTime = lowerTask.getCompletedTime();
+                                if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
+                                    lower = lowerTask.getSort();
+                                }
                             }
-                            task.put(TaskProperty.SORT, task.getSort() - 3);
+                            task.put(TaskProperty.SORT, lower - 1);
                             Tasker.config.setTask(task);
                             Tasker.config.saveToFile();
                             Tasker.updateTaskBoxesWithConfig(task, false);
@@ -271,10 +284,21 @@ public class Tasker {
                     public void onActivate(MenuItem menuItem) {
                         try {
                             Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
-                            if (task.getSort() == Tasker.config.getTasks().length * 2) {
-                                return;
+                            List<Task> tasks = new ArrayList<>(Arrays.asList(Tasker.config.getTasks()));
+                            Collections.reverse(tasks);
+                            Datetime limit = new Datetime();
+                            limit.addDay(-1);
+                            long higher = Integer.MAX_VALUE;
+                            for (Task higherTask : tasks) {
+                                if (higherTask.getID() == task.getID()) {
+                                    break;
+                                }
+                                Datetime completedTime = higherTask.getCompletedTime();
+                                if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
+                                    higher = higherTask.getSort();
+                                }
                             }
-                            task.put(TaskProperty.SORT, task.getSort() + 3);
+                            task.put(TaskProperty.SORT, higher + 1);
                             Tasker.config.setTask(task);
                             Tasker.config.saveToFile();
                             Tasker.updateTaskBoxesWithConfig(task, false);
