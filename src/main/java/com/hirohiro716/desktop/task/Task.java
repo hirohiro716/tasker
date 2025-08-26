@@ -42,6 +42,7 @@ public class Task extends JSONObject {
                     }
                     break;
                 case DESCRIPTION:
+                case DESCRIPTION_IS_READONLY:
                 case DIRECTORY:
                 case COMPLETED_TIME:
                 case CREATED_TIME:
@@ -79,6 +80,18 @@ public class Task extends JSONObject {
             value.append(this.get(TaskProperty.DESCRIPTION).getContent());
         }
         return value.toString();
+    }
+
+    /**
+     * このタスクの詳細が読み取り専用の場合はtrueを返す。
+     * 
+     * @return
+     */
+    public boolean getDescriptionIsReadonly() {
+        if (this.isNull(TaskProperty.DESCRIPTION_IS_READONLY) == false) {
+            return (boolean) this.get(TaskProperty.DESCRIPTION_IS_READONLY).getContent();
+        }
+        return false;
     }
 
     /**

@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.gnome.gdk.Event;
 import org.gnome.gdk.EventButton;
-import org.gnome.gdk.EventFocus;
 import org.gnome.gdk.MouseButton;
 import org.gnome.gdk.Pixbuf;
 import org.gnome.gdk.RGBA;
@@ -133,17 +132,6 @@ public class Tasker {
         if (editable == false) {
             descriptionTextView.overrideColor(StateFlags.NORMAL, readonlyColor);
         }
-        descriptionTextView.connect(new Widget.FocusOutEvent() {
-
-            @Override
-            public boolean onFocusOutEvent(Widget widget, EventFocus eventFocus) {
-                if (descriptionTextView.getBuffer().getCharCount() > 0) {
-                    descriptionTextView.setEditable(false);
-                    descriptionTextView.overrideColor(StateFlags.NORMAL, readonlyColor);
-                }
-                return false;
-            }
-        });
         descriptionTextView.getBuffer().connect(new TextBuffer.Changed() {
 
             @Override
@@ -312,17 +300,33 @@ public class Tasker {
                     }
                 });
                 menu.append(moveDownMenuItem);
-                MenuItem editDescriptionMenuItem = new MenuItem("編集");
-                editDescriptionMenuItem.connect(new MenuItem.Activate() {
+                MenuItem descriptionReadonlySwitchMenuItem = new MenuItem("ロック切り替え");
+                descriptionReadonlySwitchMenuItem.connect(new MenuItem.Activate() {
 
                     @Override
                     public void onActivate(MenuItem menuItem) {
-                        descriptionTextView.setEditable(true);
-                        descriptionTextView.overrideColor(StateFlags.NORMAL, null);
-                        descriptionTextView.grabFocus();
+                        boolean isReadonly = false;
+                        try {
+                            Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
+                            isReadonly = task.getDescriptionIsReadonly() == false;
+                            task.put(TaskProperty.DESCRIPTION_IS_READONLY, isReadonly);
+                            Tasker.config.setTask(task);
+                            Tasker.widgetAndData.put(box, task.toString());
+                            Tasker.saveToConfigFileIfPossible();
+                        } catch (ParseException exception) {
+                            exception.printStackTrace();
+                        }
+                        if (isReadonly) {
+                            descriptionTextView.setEditable(false);
+                            descriptionTextView.overrideColor(StateFlags.NORMAL, readonlyColor);
+                        } else {
+                            descriptionTextView.setEditable(true);
+                            descriptionTextView.overrideColor(StateFlags.NORMAL, null);
+                            descriptionTextView.grabFocus();
+                        }
                     }
                 });
-                menu.append(editDescriptionMenuItem);
+                menu.append(descriptionReadonlySwitchMenuItem);
                 MenuItem removeTaskMenuItem = new MenuItem("削除");
                 removeTaskMenuItem.connect(new MenuItem.Activate() {
 
@@ -370,7 +374,7 @@ public class Tasker {
                 }
             }
             boolean focus = focusTask != null && task.getID() == focusTask.getID();
-            boolean editable = task.getDescription().length() == 0 || focus && focusTaskEditable;
+            boolean editable = task.getDescriptionIsReadonly() == false || focus && focusTaskEditable;
             Box taskBox = Tasker.createTaskBox(task, focus, editable);
             if (index == 0) {
                 Paned topSpacer = new Paned(Orientation.HORIZONTAL);

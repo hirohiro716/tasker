@@ -9,6 +9,7 @@ import com.hirohiro716.scent.property.PropertyInterface;
 public enum TaskProperty implements PropertyInterface {
     ID("ID"),
     DESCRIPTION("説明"),
+    DESCRIPTION_IS_READONLY("読み取り専用", false),
     DIRECTORY("ディレクトリ"),
     COMPLETED_TIME("完了日時"),
     CREATED_TIME("作成日時", Datetime.newInstance().toString()),
