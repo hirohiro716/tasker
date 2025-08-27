@@ -34,23 +34,27 @@ public class Task extends JSONObject {
     public Task(Config config) throws ParseException {
         this("{}", config);
         for (TaskProperty property : TaskProperty.values()) {
-            StringObject value = new StringObject();
+            Object value = null;
             switch (property) {
                 case ID:
-                    while (value.length() == 0 || this.config.existsTask(value)) {
-                        value.set(Datetime.newInstance().getAllMilliSecond());
+                    StringObject id = new StringObject();
+                    while (id.length() == 0 || this.config.existsTask(id.toString())) {
+                        id.set(Datetime.newInstance().getAllMilliSecond());
                     }
+                    value = id.toString();
                     break;
                 case DESCRIPTION:
-                case DESCRIPTION_IS_READONLY:
                 case DIRECTORY:
                 case COMPLETED_TIME:
                 case CREATED_TIME:
+                    value = StringObject.newInstance(property.getDefaultValue());
+                    break;
+                case DESCRIPTION_IS_READONLY:
                 case SORT:
-                    value.set(property.getDefaultValue());
+                    value = property.getDefaultValue();
                     break;
             }
-            this.put(property, value.toString());
+            this.put(property, value);
         }
     }
 
