@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.gnome.gdk.Event;
 import org.gnome.gdk.EventButton;
+import org.gnome.gdk.EventFocus;
 import org.gnome.gdk.MouseButton;
 import org.gnome.gdk.Pixbuf;
 import org.gnome.gdk.RGBA;
@@ -69,6 +70,10 @@ public class Tasker {
     private static Map<Widget, String> widgetAndData = new HashMap<>();
 
     private static Map<Widget, Label> widgetAndNumberOfItemsLabel = new HashMap<>();
+
+    private static Box unsavedBox = null;
+
+    private static TextView unsavedTextView = null;
 
     private static boolean windowIsClosed = false;
 
@@ -132,19 +137,30 @@ public class Tasker {
         if (editable == false) {
             descriptionTextView.overrideColor(StateFlags.NORMAL, readonlyColor);
         }
-        descriptionTextView.getBuffer().connect(new TextBuffer.Changed() {
+        descriptionTextView.connect(new Widget.FocusOutEvent() {
 
             @Override
-            public void onChanged(TextBuffer textBuffer) {
+            public boolean onFocusOutEvent(Widget widget, EventFocus eventFocus) {
                 try {
                     Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
                     task.put(TaskProperty.DESCRIPTION, descriptionTextView.getBuffer().getText());
                     Tasker.config.setTask(task);
                     Tasker.widgetAndData.put(box, task.toString());
                     Tasker.saveToConfigFileIfPossible();
+                    Tasker.unsavedBox = null;
+                    Tasker.unsavedTextView = null;
                 } catch (ParseException exception) {
                     exception.printStackTrace();
                 }
+                return false;
+            }
+        });
+        descriptionTextView.getBuffer().connect(new TextBuffer.Changed() {
+
+            @Override
+            public void onChanged(TextBuffer textBuffer) {
+                Tasker.unsavedBox = box;
+                Tasker.unsavedTextView = descriptionTextView;
             }
         });
         if (focus) {
@@ -432,6 +448,11 @@ public class Tasker {
             @Override
             public boolean onDeleteEvent(Widget widget, Event event) {
                 try {
+                    if (Tasker.unsavedBox != null && Tasker.unsavedTextView != null) {
+                        Task task = new Task(Tasker.widgetAndData.get(Tasker.unsavedBox), Tasker.config);
+                        task.put(TaskProperty.DESCRIPTION, Tasker.unsavedTextView.getBuffer().getText());
+                        Tasker.config.setTask(task);
+                    }
                     Tasker.config.put(ConfigProperty.WINDOW_LOCATION_X, Tasker.window.getPositionX());
                     Tasker.config.put(ConfigProperty.WINDOW_LOCATION_Y, Tasker.window.getPositionY());
                     Tasker.config.saveToFile();
