@@ -89,13 +89,14 @@ public class Config extends JSONObject {
                 value.append(ConfigProperty.TASKS.getDefaultValue());
             }
             Datetime limit = new Datetime();
-            limit.addMonth(-1);;
+            limit.addDay(-10);
             JSONArray jsonArray = new JSONArray(value.toString());
             for (JSONValue<?> jsonValue : jsonArray.getContent()) {
                 Task task = new Task(jsonValue.toString(), this);
                 Datetime completedTime = task.getCompletedTime();
                 if (completedTime != null) {
                     if (limit.getAllMilliSecond() > completedTime.getAllMilliSecond()) {
+                        this.removeTask(task.getID());
                         continue;
                     }
                 }
