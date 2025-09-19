@@ -89,6 +89,11 @@ public class Tasker {
     }
 
     /**
+     * タスク表示時間。
+     */
+    private static final int DISPLAY_PERIOD_HOURS = 20;
+
+    /**
      * 指定されたタスクの行を作成する。
      * 
      * @param task
@@ -123,7 +128,7 @@ public class Tasker {
                 }
             }
         });
-        checkButton.setTooltipText("チェックされたタスクは1日後に非表示になり、1ヶ月後に削除されます。");
+        checkButton.setTooltipText(StringObject.join("チェックされたタスクは", Tasker.DISPLAY_PERIOD_HOURS, "時間後に非表示になり、", Config.RETENTION_PERIOD_DAYS, "日後に削除されます。").toString());
         box.packStart(checkButton, false, false, 10);
         // Description
         TextView descriptionTextView = new TextView();

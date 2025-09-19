@@ -75,6 +75,11 @@ public class Config extends JSONObject {
     }
 
     /**
+     * タスク保持日数。
+     */
+    public static final int RETENTION_PERIOD_DAYS = 10;
+
+    /**
      * タスクを取得する。
      * 
      * @return
@@ -89,7 +94,7 @@ public class Config extends JSONObject {
                 value.append(ConfigProperty.TASKS.getDefaultValue());
             }
             Datetime limit = new Datetime();
-            limit.addDay(-10);
+            limit.addDay(Config.RETENTION_PERIOD_DAYS * -1);
             JSONArray jsonArray = new JSONArray(value.toString());
             for (JSONValue<?> jsonValue : jsonArray.getContent()) {
                 Task task = new Task(jsonValue.toString(), this);
