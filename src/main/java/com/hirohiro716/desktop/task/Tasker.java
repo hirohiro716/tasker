@@ -43,6 +43,7 @@ import org.gnome.gtk.ToggleButton;
 import org.gnome.gtk.Widget;
 import org.gnome.gtk.Window;
 import org.gnome.gtk.WrapMode;
+import org.gnome.pango.EllipsizeMode;
 
 import com.hirohiro716.desktop.task.config.Config;
 import com.hirohiro716.desktop.task.config.ConfigProperty;
@@ -65,7 +66,17 @@ public class Tasker {
 
     private static Config config;
 
+    private static Box mainBox;
+
+    private static Box buttonsBox;
+
+    private static ScrolledWindow tasksScrolledWindow;
+
     private static Box tasksBox;
+
+    private static Button addButton;
+
+    private static Button sortButton;
 
     private static Map<Widget, String> widgetAndData = new HashMap<>();
 
@@ -74,6 +85,12 @@ public class Tasker {
     private static Box unsavedBox = null;
 
     private static TextView unsavedTextView = null;
+
+    private static ScrolledWindow sortScrolledWindow;
+
+    private static Box sortBox;
+
+    private static Button sortEndButton;
 
     private static boolean windowIsClosed = false;
 
@@ -253,74 +270,6 @@ public class Tasker {
             @Override
             public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
                 Menu menu = new Menu();
-                MenuItem moveUpMenuItem = new MenuItem("上に移動");
-                moveUpMenuItem.connect(new MenuItem.Activate() {
-
-                    @Override
-                    public void onActivate(MenuItem menuItem) {
-                        try {
-                            Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
-                            Datetime limit = new Datetime();
-                            limit.addDay(-1);
-                            long lower = 0;
-                            for (Task lowerTask : Tasker.config.getTasks()) {
-                                if (lowerTask.getID() == task.getID()) {
-                                    break;
-                                }
-                                Datetime completedTime = lowerTask.getCompletedTime();
-                                if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
-                                    lower = lowerTask.getSort();
-                                }
-                            }
-                            task.put(TaskProperty.SORT, lower - 1);
-                            Tasker.config.setTask(task);
-                            Tasker.config.saveToFile();
-                            Tasker.updateTaskBoxesWithConfig(task, false);
-                            Tasker.tasksBox.showAll();
-                        } catch (ParseException exception) {
-                            exception.printStackTrace();
-                        } catch (IOException exception) {
-                            MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
-                            messageDialog.showAll();
-                        }
-                    }
-                });
-                menu.append(moveUpMenuItem);
-                MenuItem moveDownMenuItem = new MenuItem("下に移動");
-                moveDownMenuItem.connect(new MenuItem.Activate() {
-
-                    @Override
-                    public void onActivate(MenuItem menuItem) {
-                        try {
-                            Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
-                            List<Task> tasks = new ArrayList<>(Arrays.asList(Tasker.config.getTasks()));
-                            Collections.reverse(tasks);
-                            Datetime limit = new Datetime();
-                            limit.addDay(-1);
-                            long higher = Integer.MAX_VALUE;
-                            for (Task higherTask : tasks) {
-                                if (higherTask.getID() == task.getID()) {
-                                    break;
-                                }
-                                Datetime completedTime = higherTask.getCompletedTime();
-                                if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
-                                    higher = higherTask.getSort();
-                                }
-                            }
-                            task.put(TaskProperty.SORT, higher + 1);
-                            Tasker.config.setTask(task);
-                            Tasker.config.saveToFile();
-                            Tasker.updateTaskBoxesWithConfig(task, false);
-                            Tasker.tasksBox.showAll();
-                        } catch (ParseException exception) {
-                            exception.printStackTrace();
-                        } catch (IOException exception) {
-                            MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
-                            messageDialog.showAll();
-                        }
-                    }
-                });
-                menu.append(moveDownMenuItem);
                 MenuItem descriptionReadonlySwitchMenuItem = new MenuItem("ロック切り替え");
                 descriptionReadonlySwitchMenuItem.connect(new MenuItem.Activate() {
 
@@ -370,6 +319,10 @@ public class Tasker {
             }
         });
         buttonsBox.add(menuButton);
+        Label spacer = new Label();
+        spacer.setSizeRequest(1, 1);
+        spacer.overrideColor(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
+        buttonsBox.add(spacer);
         return box;
     }
 
@@ -412,6 +365,144 @@ public class Tasker {
     }
 
     /**
+     * 指定されたタスクの並び替え項目を作成する。
+     * 
+     * @param task
+     * @return
+     */
+    private static Box createSortItemBox(Task task) {
+        Box box = new Box(Orientation.HORIZONTAL, 0);
+        Tasker.widgetAndData.put(box, task.toString());
+        // Description
+        StringObject description = new StringObject(task.getDescription());
+        description.replaceLF("｜");
+        Label descriptionLabel = new Label(description.toString());
+        descriptionLabel.setLineWrap(false);
+        descriptionLabel.setEllipsize(EllipsizeMode.END);
+        descriptionLabel.overrideColor(StateFlags.NORMAL, new RGBA(0, 0, 0, 0.5));
+        box.packStart(descriptionLabel, false, false, 10);
+        // Buttons box
+        Box buttonsBox = new Box(Orientation.HORIZONTAL, 5);
+        box.packEnd(buttonsBox, false, false, 10);
+        // Up
+        Button upButton = new Button();
+        upButton.setImage(new Image(Stock.GO_UP, IconSize.BUTTON));
+        upButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
+        upButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
+        upButton.connect(new Widget.ButtonPressEvent() {
+
+            @Override
+            public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
+                try {
+                    Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
+                    Datetime limit = new Datetime();
+                    limit.addDay(-1);
+                    long lower = 0;
+                    for (Task lowerTask : Tasker.config.getTasks()) {
+                        if (lowerTask.getID() == task.getID()) {
+                            break;
+                        }
+                        Datetime completedTime = lowerTask.getCompletedTime();
+                        if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
+                            lower = lowerTask.getSort();
+                        }
+                    }
+                    task.put(TaskProperty.SORT, lower - 1);
+                    Tasker.config.setTask(task);
+                    Tasker.config.saveToFile();
+                    Tasker.updateSortBoxWithConfig();
+                    Tasker.sortBox.showAll();
+                } catch (ParseException exception) {
+                    exception.printStackTrace();
+                } catch (IOException exception) {
+                    MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
+                    messageDialog.showAll();
+                }
+                return false;
+            }
+        });
+        buttonsBox.add(upButton);
+        // Down
+        Button downButton = new Button();
+        downButton.setImage(new Image(Stock.GO_DOWN, IconSize.BUTTON));
+        downButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
+        downButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
+        downButton.connect(new Widget.ButtonPressEvent() {
+
+            @Override
+            public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
+                try {
+                    Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
+                    List<Task> tasks = new ArrayList<>(Arrays.asList(Tasker.config.getTasks()));
+                    Collections.reverse(tasks);
+                    Datetime limit = new Datetime();
+                    limit.addDay(-1);
+                    long higher = Integer.MAX_VALUE;
+                    for (Task higherTask : tasks) {
+                        if (higherTask.getID() == task.getID()) {
+                            break;
+                        }
+                        Datetime completedTime = higherTask.getCompletedTime();
+                        if (completedTime == null || limit.getAllMilliSecond() < completedTime.getAllMilliSecond()) {
+                            higher = higherTask.getSort();
+                        }
+                    }
+                    task.put(TaskProperty.SORT, higher + 1);
+                    Tasker.config.setTask(task);
+                    Tasker.config.saveToFile();
+                    Tasker.updateSortBoxWithConfig();
+                    Tasker.sortBox.showAll();
+                } catch (ParseException exception) {
+                    exception.printStackTrace();
+                } catch (IOException exception) {
+                    MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
+                    messageDialog.showAll();
+                }
+                return false;
+            }
+        });
+        buttonsBox.add(downButton);
+        Label spacer = new Label();
+        spacer.setSizeRequest(1, 1);
+        spacer.overrideColor(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
+        buttonsBox.add(spacer);
+        return box;
+    }
+
+    /**
+     * 設定で並び替えボックスを更新する。
+     */
+    private static void updateSortBoxWithConfig() {
+        for (Widget widget : Tasker.sortBox.getChildren()) {
+            Tasker.sortBox.remove(widget);
+        }
+        Datetime limit = new Datetime();
+        limit.addDay(-1);
+        Task[] tasks = Tasker.config.getTasks();
+        for (int index = 0; index < tasks.length; index++) {
+            Task task = tasks[index];
+            Datetime completedTime = task.getCompletedTime();
+            if (completedTime != null) {
+                if (limit.getAllMilliSecond() > completedTime.getAllMilliSecond()) {
+                    continue;
+                }
+            }
+            Box sortItemBox = Tasker.createSortItemBox(task);
+            if (index == 0) {
+                Paned topSpacer = new Paned(Orientation.HORIZONTAL);
+                Tasker.sortBox.packStart(topSpacer, false, false, 0);
+                Tasker.sortBox.add(sortItemBox);
+            } else if (index == tasks.length - 1) {
+                Tasker.sortBox.add(sortItemBox);
+                Paned bottomSpacer = new Paned(Orientation.HORIZONTAL);
+                Tasker.sortBox.packStart(bottomSpacer, false, false, 0);
+            } else {
+                Tasker.sortBox.add(sortItemBox);
+            }
+        }
+    }
+
+    /**
      * アプリケーションを開始する。
      * 
      * @param args
@@ -444,7 +535,7 @@ public class Tasker {
         title.append(InetAddress.getLocalHost().getHostName());
         Tasker.window.setTitle(title.toString());
         Tasker.window.setIcon(new Pixbuf(Tasker.class.getResourceAsStream("media/icon.svg").readAllBytes()));
-        Tasker.window.setDefaultSize(400, 500);
+        Tasker.window.setDefaultSize(430, 550);
         Tasker.window.setResizable(false);
         Tasker.window.setStick(true);
         Tasker.window.move(config.getWindowLocationX(), config.getWindowLocationY());
@@ -472,18 +563,27 @@ public class Tasker {
             }
         });
         // Tasks
-        Box box = new Box(Orientation.VERTICAL, 0);
-        Tasker.window.add(box);
-        ScrolledWindow scrolledWindow = new ScrolledWindow();
-        box.packStart(scrolledWindow, true, true, 0);
+        Tasker.mainBox = new Box(Orientation.VERTICAL, 0);
+        Tasker.window.add(Tasker.mainBox);
+        Tasker.tasksScrolledWindow = new ScrolledWindow();
+        Tasker.mainBox.packStart(Tasker.tasksScrolledWindow, true, true, 0);
         Tasker.tasksBox = new Box(Orientation.VERTICAL, 20);
-        scrolledWindow.addWithViewport(Tasker.tasksBox);
+        Tasker.tasksScrolledWindow.addWithViewport(Tasker.tasksBox);
         Tasker.updateTaskBoxesWithConfig(null, false);
+        // Sort
+        Tasker.sortScrolledWindow = new ScrolledWindow();
+        Tasker.sortBox = new Box(Orientation.VERTICAL, 10);
+        Tasker.sortScrolledWindow.addWithViewport(Tasker.sortBox);
+        Tasker.sortScrolledWindow.show();
         // Buttons
-        Box buttonsBox = new Box(Orientation.HORIZONTAL, 10);
-        box.packEnd(buttonsBox, false, false, 15);
-        Button addButton = new Button("追加");
-        addButton.connect(new Button.Clicked() {
+        Tasker.buttonsBox = new Box(Orientation.HORIZONTAL, 10);
+        Tasker.mainBox.packEnd(Tasker.buttonsBox, false, false, 15);
+        Label spacer = new Label();
+        spacer.setSizeRequest(5, 1);
+        spacer.overrideColor(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
+        Tasker.buttonsBox.packEnd(spacer, false, false, 0);
+        Tasker.addButton = new Button("追加");
+        Tasker.addButton.connect(new Button.Clicked() {
 
             @Override
             public void onClicked(Button button) {
@@ -501,7 +601,37 @@ public class Tasker {
                 }
             }
         });
-        buttonsBox.packEnd(addButton, false, false, 15);
+        Tasker.buttonsBox.packEnd(Tasker.addButton, false, false, 0);
+        Tasker.sortButton = new Button("並び替え");
+        Tasker.sortButton.connect(new Button.Clicked() {
+
+            @Override
+            public void onClicked(Button button) {
+                Tasker.mainBox.remove(Tasker.tasksScrolledWindow);
+                Tasker.mainBox.packStart(Tasker.sortScrolledWindow, true, true, 0);
+                Tasker.buttonsBox.remove(Tasker.addButton);
+                Tasker.buttonsBox.remove(Tasker.sortButton);
+                Tasker.buttonsBox.packEnd(Tasker.sortEndButton, false, false, 0);
+                Tasker.updateSortBoxWithConfig();
+                Tasker.sortBox.showAll();
+            }
+        });
+        Tasker.buttonsBox.packEnd(Tasker.sortButton, false, false, 0);
+        Tasker.sortEndButton = new Button("戻る");
+        Tasker.sortEndButton.connect(new Button.Clicked() {
+
+            @Override
+            public void onClicked(Button button) {
+                Tasker.mainBox.remove(Tasker.sortScrolledWindow);
+                Tasker.mainBox.packStart(Tasker.tasksScrolledWindow, true, true, 0);
+                Tasker.buttonsBox.remove(Tasker.sortEndButton);
+                Tasker.buttonsBox.packEnd(Tasker.addButton, false, false, 0);
+                Tasker.buttonsBox.packEnd(Tasker.sortButton, false, false, 0);
+                Tasker.updateTaskBoxesWithConfig(null, false);
+                Tasker.tasksBox.showAll();
+            }
+        });
+        Tasker.sortEndButton.show();
         window.showAll();
         // Number of items updater
         Thread thread = new Thread(new Runnable() {
