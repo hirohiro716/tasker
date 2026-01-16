@@ -265,10 +265,10 @@ public class Tasker {
         menuButton.setImage(new Image(Stock.PREFERENCES, IconSize.BUTTON));
         menuButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
         menuButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
-        menuButton.connect(new Widget.ButtonPressEvent() {
+        menuButton.connect(new Button.Clicked() {
 
             @Override
-            public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
+            public void onClicked(Button button) {
                 Menu menu = new Menu();
                 MenuItem descriptionReadonlySwitchMenuItem = new MenuItem("ロック切り替え");
                 descriptionReadonlySwitchMenuItem.connect(new MenuItem.Activate() {
@@ -315,7 +315,6 @@ public class Tasker {
                 menu.append(removeTaskMenuItem);
                 menu.showAll();
                 menu.popup();
-                return false;
             }
         });
         buttonsBox.add(menuButton);
@@ -368,9 +367,11 @@ public class Tasker {
      * 指定されたタスクの並び替え項目を作成する。
      * 
      * @param task
+     * @param focusToUp 上ボタンにフォーカスする場合はtrueを指定。
+     * @param focusToDown 下ボタンにフォーカスする場合はtrueを指定。
      * @return
      */
-    private static Box createSortItemBox(Task task) {
+    private static Box createSortItemBox(Task task, boolean focusToUp, boolean focusToDown) {
         Box box = new Box(Orientation.HORIZONTAL, 0);
         Tasker.widgetAndData.put(box, task.toString());
         // Description
@@ -385,14 +386,14 @@ public class Tasker {
         Box buttonsBox = new Box(Orientation.HORIZONTAL, 5);
         box.packEnd(buttonsBox, false, false, 10);
         // Up
-        Button upButton = new Button();
+        Button upButton = new KeyPressableButton();
         upButton.setImage(new Image(Stock.GO_UP, IconSize.BUTTON));
         upButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
         upButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
-        upButton.connect(new Widget.ButtonPressEvent() {
+        upButton.connect(new Button.Clicked() {
 
             @Override
-            public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
+            public void onClicked(Button button) {
                 try {
                     Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
                     Datetime limit = new Datetime();
@@ -410,7 +411,7 @@ public class Tasker {
                     task.put(TaskProperty.SORT, lower - 1);
                     Tasker.config.setTask(task);
                     Tasker.config.saveToFile();
-                    Tasker.updateSortBoxWithConfig();
+                    Tasker.updateSortBoxWithConfig(task, null);
                     Tasker.sortBox.showAll();
                 } catch (ParseException exception) {
                     exception.printStackTrace();
@@ -418,19 +419,28 @@ public class Tasker {
                     MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
                     messageDialog.showAll();
                 }
-                return false;
             }
         });
+        if (focusToUp) {
+            Gtk.idleAdd(new Handler() {
+
+                @Override
+                public boolean run() {
+                    upButton.grabFocus();
+                    return false;
+                }
+            });
+        }
         buttonsBox.add(upButton);
         // Down
-        Button downButton = new Button();
+        Button downButton = new KeyPressableButton();
         downButton.setImage(new Image(Stock.GO_DOWN, IconSize.BUTTON));
         downButton.overrideBackground(StateFlags.NORMAL, new RGBA(0, 0, 0, 0));
         downButton.overrideBackground(StateFlags.ACTIVE, new RGBA(0, 0, 0, 0.1));
-        downButton.connect(new Widget.ButtonPressEvent() {
+        downButton.connect(new Button.Clicked() {
 
             @Override
-            public boolean onButtonPressEvent(Widget widget, EventButton eventButton) {
+            public void onClicked(Button button) {
                 try {
                     Task task = new Task(Tasker.widgetAndData.get(box), Tasker.config);
                     List<Task> tasks = new ArrayList<>(Arrays.asList(Tasker.config.getTasks()));
@@ -450,7 +460,7 @@ public class Tasker {
                     task.put(TaskProperty.SORT, higher + 1);
                     Tasker.config.setTask(task);
                     Tasker.config.saveToFile();
-                    Tasker.updateSortBoxWithConfig();
+                    Tasker.updateSortBoxWithConfig(null, task);
                     Tasker.sortBox.showAll();
                 } catch (ParseException exception) {
                     exception.printStackTrace();
@@ -458,9 +468,18 @@ public class Tasker {
                     MessageDialog messageDialog = new MessageDialog(Tasker.window, false, MessageType.ERROR, ButtonsType.OK, ExceptionMessenger.newInstance(exception).make());
                     messageDialog.showAll();
                 }
-                return false;
             }
         });
+        if (focusToDown) {
+            Gtk.idleAdd(new Handler() {
+
+                @Override
+                public boolean run() {
+                    downButton.grabFocus();
+                    return false;
+                }
+            });
+        }
         buttonsBox.add(downButton);
         Label spacer = new Label();
         spacer.setSizeRequest(1, 1);
@@ -471,8 +490,11 @@ public class Tasker {
 
     /**
      * 設定で並び替えボックスを更新する。
+     * 
+     * @param taskForFocusToUp 上ボタンにフォーカスする場合はタスクを指定。
+     * @param taskForFocusToDown 下ボタンにフォーカスする場合はタスクを指定。
      */
-    private static void updateSortBoxWithConfig() {
+    private static void updateSortBoxWithConfig(Task taskForFocusToUp, Task taskForFocusToDown) {
         for (Widget widget : Tasker.sortBox.getChildren()) {
             Tasker.sortBox.remove(widget);
         }
@@ -487,7 +509,9 @@ public class Tasker {
                     continue;
                 }
             }
-            Box sortItemBox = Tasker.createSortItemBox(task);
+            boolean focusToUp = taskForFocusToUp != null && task.getID() == taskForFocusToUp.getID();
+            boolean focusToDown = taskForFocusToDown != null && task.getID() == taskForFocusToDown.getID();
+            Box sortItemBox = Tasker.createSortItemBox(task, focusToUp, focusToDown);
             if (index == 0) {
                 Paned topSpacer = new Paned(Orientation.HORIZONTAL);
                 Tasker.sortBox.packStart(topSpacer, false, false, 0);
@@ -612,7 +636,7 @@ public class Tasker {
                 Tasker.buttonsBox.remove(Tasker.addButton);
                 Tasker.buttonsBox.remove(Tasker.sortButton);
                 Tasker.buttonsBox.packEnd(Tasker.sortEndButton, false, false, 0);
-                Tasker.updateSortBoxWithConfig();
+                Tasker.updateSortBoxWithConfig(null, null);
                 Tasker.sortBox.showAll();
             }
         });
