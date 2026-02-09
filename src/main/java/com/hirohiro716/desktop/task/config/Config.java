@@ -77,7 +77,7 @@ public class Config extends JSONObject {
     /**
      * タスク保持日数。
      */
-    public static final int RETENTION_PERIOD_DAYS = 10;
+    public static final int RETENTION_PERIOD_DAYS = 14;
 
     /**
      * タスクを取得する。

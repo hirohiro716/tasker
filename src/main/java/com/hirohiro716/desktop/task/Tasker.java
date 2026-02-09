@@ -108,7 +108,7 @@ public class Tasker {
     /**
      * タスク表示時間。
      */
-    private static final int DISPLAY_PERIOD_HOURS = 20;
+    private static final int DISPLAY_PERIOD_HOURS = 12;
 
     /**
      * 指定されたタスクの行を作成する。
