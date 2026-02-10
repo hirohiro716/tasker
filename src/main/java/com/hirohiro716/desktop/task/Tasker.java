@@ -48,6 +48,7 @@ import org.gnome.pango.EllipsizeMode;
 import com.hirohiro716.desktop.task.config.Config;
 import com.hirohiro716.desktop.task.config.ConfigProperty;
 import com.hirohiro716.scent.ExceptionMessenger;
+import com.hirohiro716.scent.RoundNumber;
 import com.hirohiro716.scent.StringObject;
 import com.hirohiro716.scent.datetime.Datetime;
 import com.hirohiro716.scent.filesystem.Directory;
@@ -195,7 +196,33 @@ public class Tasker {
                 }
             });
         }
-        box.packStart(descriptionTextView, true, true, 0);
+        ScrolledWindow scrolledWindow = new ScrolledWindow();
+        scrolledWindow.setSizeRequest(-1, 50);
+        scrolledWindow.add(descriptionTextView);
+        box.packStart(scrolledWindow, true, true, 0);
+        descriptionTextView.connect(new Widget.FocusInEvent() {
+
+            @Override
+            public boolean onFocusInEvent(Widget widget, EventFocus eventFocus) {
+                int numberOfLines = 0;
+                for (String line: StringObject.newInstance(descriptionTextView.getBuffer().getText()).split("\n")) {
+                    numberOfLines += RoundNumber.FLOOR.calculate(line.length() / 20);
+                    numberOfLines++;
+                }
+                if (numberOfLines >= 3) {
+                    scrolledWindow.setSizeRequest(-1, 100);
+                }
+                return false;
+            }
+        });
+        descriptionTextView.connect(new Widget.FocusOutEvent() {
+
+            @Override
+            public boolean onFocusOutEvent(Widget widget, EventFocus eventFocus) {
+                scrolledWindow.setSizeRequest(-1, 50);
+                return false;
+            }
+        });
         // Buttons box
         Box buttonsBox = new Box(Orientation.HORIZONTAL, 5);
         box.packEnd(buttonsBox, false, false, 10);
