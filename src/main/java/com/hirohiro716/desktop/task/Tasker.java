@@ -112,6 +112,25 @@ public class Tasker {
     private static final int DISPLAY_PERIOD_HOURS = 12;
 
     /**
+     * 指定されたタスクの詳細のサイズを調整
+     * 
+     * @param descriptionScrolledWindow
+     * @param descriptionTextBuffer
+     */
+    private static void adjustDescriptionSize(ScrolledWindow descriptionScrolledWindow, TextBuffer descriptionTextBuffer) {
+        int numberOfLines = 0;
+        for (String line: StringObject.newInstance(descriptionTextBuffer.getText()).split("\n")) {
+            numberOfLines += RoundNumber.FLOOR.calculate(line.length() / 20);
+            numberOfLines++;
+        }
+        int height = 10 + (20 * numberOfLines);
+        if (height > 80) {
+            height = 80;
+        }
+        descriptionScrolledWindow.setSizeRequest(-1, height);
+    }
+
+    /**
      * 指定されたタスクの行を作成する。
      * 
      * @param task
@@ -149,6 +168,7 @@ public class Tasker {
         checkButton.setTooltipText(StringObject.join("チェックされたタスクは", Tasker.DISPLAY_PERIOD_HOURS, "時間後に非表示になり、", Config.RETENTION_PERIOD_DAYS, "日後に削除されます。").toString());
         box.packStart(checkButton, false, false, 10);
         // Description
+        ScrolledWindow descriptionScrolledWindow = new ScrolledWindow();
         TextView descriptionTextView = new TextView();
         descriptionTextView.getBuffer().setText(task.getDescription());
         descriptionTextView.setMarginLeft(2);
@@ -184,8 +204,12 @@ public class Tasker {
             public void onChanged(TextBuffer textBuffer) {
                 Tasker.unsavedBox = box;
                 Tasker.unsavedTextView = descriptionTextView;
+                Tasker.adjustDescriptionSize(descriptionScrolledWindow, textBuffer);
             }
         });
+        Tasker.adjustDescriptionSize(descriptionScrolledWindow, descriptionTextView.getBuffer());
+        descriptionScrolledWindow.add(descriptionTextView);
+        box.packStart(descriptionScrolledWindow, true, true, 0);
         if (focus) {
             Gtk.idleAdd(new Handler() {
 
@@ -196,33 +220,6 @@ public class Tasker {
                 }
             });
         }
-        ScrolledWindow scrolledWindow = new ScrolledWindow();
-        scrolledWindow.setSizeRequest(-1, 50);
-        scrolledWindow.add(descriptionTextView);
-        box.packStart(scrolledWindow, true, true, 0);
-        descriptionTextView.connect(new Widget.FocusInEvent() {
-
-            @Override
-            public boolean onFocusInEvent(Widget widget, EventFocus eventFocus) {
-                int numberOfLines = 0;
-                for (String line: StringObject.newInstance(descriptionTextView.getBuffer().getText()).split("\n")) {
-                    numberOfLines += RoundNumber.FLOOR.calculate(line.length() / 20);
-                    numberOfLines++;
-                }
-                if (numberOfLines >= 3) {
-                    scrolledWindow.setSizeRequest(-1, 100);
-                }
-                return false;
-            }
-        });
-        descriptionTextView.connect(new Widget.FocusOutEvent() {
-
-            @Override
-            public boolean onFocusOutEvent(Widget widget, EventFocus eventFocus) {
-                scrolledWindow.setSizeRequest(-1, 50);
-                return false;
-            }
-        });
         // Buttons box
         Box buttonsBox = new Box(Orientation.HORIZONTAL, 5);
         box.packEnd(buttonsBox, false, false, 10);
